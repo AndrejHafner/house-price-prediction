@@ -8,6 +8,7 @@ from sklearn.metrics import mean_squared_error, make_scorer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from utils import *
+from config import *
 
 
 models = ["svm","rf","xgb","lgbm"]
@@ -51,14 +52,16 @@ def get_model(model, params = None):
         print("Unknown model - exiting.")
         return
 
-    if params is None: params = {}
-
     if model is "svm":
+        if params is None: params = SVM_CONFIG
         return SVR(**params)
     elif model is "rf":
+        if params is None: params = RANDOM_FOREST_CONFIG
         return RandomForestRegressor(**params)
     elif model is "xgb":
+        if params is None: params = XGBOOST_CONFIG
         return xgb.XGBRegressor(**params)
     elif model is "lgbm":
+        if params is None: params = LIGHTGBM_CONFIG
         return lgbm.LGBMRegressor(**params)
 
