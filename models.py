@@ -39,14 +39,19 @@ def test(model, x, df_test):
         save_submission(XGBOOST_SUBMISSION_DIR, df_test, predictions)
     elif isinstance(model, lgbm.LGBMRegressor):
         save_submission(LIGHTGBM_SUBMISSION_DIR, df_test, predictions)
+    elif isinstance(model, LinearRegression):
+        save_submission(LIENAR_REGRESSION_SUBMISSION_DIR, df_test, predictions)
+    elif isinstance(model, DummyRegressor):
+        save_submission(DUMMY_REGRESSOR_AVG_SUBMISSION_DIR, df_test, predictions)
 
-def cv(model, x, y, cv = 10):
+def cv(model, x, y, k = 10):
     scorers = {
         "rmse": make_scorer(mean_squared_error, squared=False)
     }
-    cv_result = cross_validate(model, x, y, cv=cv, n_jobs=8, scoring=scorers)
+
+    cv_result = cross_validate(model, x, y, cv=k, n_jobs=8, scoring=scorers)
     rmse = float(np.mean(cv_result["test_rmse"]))
-    print(f"Cross validation complete. Folds: {cv}, Mean RMSE: { round(rmse, 2) }.")
+    print(f"Cross validation complete. Folds: { k }, Mean RMSE: { round(rmse, 3) }.")
 
 
 def get_model(model, params = None):

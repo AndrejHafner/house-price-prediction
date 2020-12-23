@@ -10,6 +10,9 @@ SVM_SUBMISSION_DIR = BASE_SUBMISSION_DIR + "/svm"
 LIGHTGBM_SUBMISSION_DIR = BASE_SUBMISSION_DIR + "/lightgbm"
 XGBOOST_SUBMISSION_DIR = BASE_SUBMISSION_DIR + "/xgboost"
 RANDOM_FOREST_SUBMISSION_DIR = BASE_SUBMISSION_DIR + "/random_forest"
+LIENAR_REGRESSION_SUBMISSION_DIR = BASE_SUBMISSION_DIR + "/linear_regression"
+DUMMY_REGRESSOR_AVG_SUBMISSION_DIR = BASE_SUBMISSION_DIR + "/dummy_regressor_avg"
+
 
 def save_submission(dir, df_test, predictions, testing_results = None):
     if not os.path.exists(dir): os.mkdir(dir)
