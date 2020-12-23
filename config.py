@@ -15,3 +15,11 @@ XGBOOST_CONFIG = {
 LIGHTGBM_CONFIG = {
 
 }
+
+LR_CONFIG = {
+
+}
+
+AVG_CONFIG = {
+
+}

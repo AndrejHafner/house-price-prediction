@@ -7,11 +7,13 @@ from sklearn.model_selection import cross_validate
 from sklearn.metrics import mean_squared_error, make_scorer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
+from sklearn.linear_model import LinearRegression
+from sklearn.dummy import DummyRegressor
 from utils import *
 from config import *
 
 
-models = ["svm","rf","xgb","lgbm"]
+models = ["svm","rf","xgb","lgbm", "lr", "avg"]
 
 def train(model, x, y, params = None, print_progress = True):
 
@@ -64,4 +66,10 @@ def get_model(model, params = None):
     elif model is "lgbm":
         if params is None: params = LIGHTGBM_CONFIG
         return lgbm.LGBMRegressor(**params)
+    elif model is "lr":
+        if params is None: params = LR_CONFIG
+        return LinearRegression(**params)
+    elif model is "avg":
+        if params is None: params = AVG_CONFIG
+        return DummyRegressor(**params)
 
