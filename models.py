@@ -15,14 +15,14 @@ from config import *
 
 models = ["svm","rf","xgb","lgbm", "lr", "avg"]
 
-def train(model, x, y, params = None, print_progress = True):
+def train(model, x, y, print_progress = True, **kwargs):
 
     if model not in models:
         print("Unknown model - exiting.")
         return
 
     start_time = time.time()
-    reg_model = get_model(model, params)
+    reg_model = get_model(model, **kwargs)
     reg_model.fit(x,y)
 
     if print_progress: print(f"Training {model} took {round(time.time() - start_time)} seconds.")
@@ -54,27 +54,27 @@ def cv(model, x, y, k = 10):
     print(f"Cross validation complete. Folds: { k }, Mean RMSE: { round(rmse, 3) }.")
 
 
-def get_model(model, params = None):
+def get_model(model, **kwargs):
     if model not in models:
         print("Unknown model - exiting.")
         return
 
     if model is "svm":
-        if params is None: params = SVM_CONFIG
-        return SVR(**params)
+        if len(kwargs) == 0: kwargs = SVM_CONFIG
+        return SVR(**kwargs)
     elif model is "rf":
-        if params is None: params = RANDOM_FOREST_CONFIG
-        return RandomForestRegressor(**params)
+        if len(kwargs) == 0: kwargs = RANDOM_FOREST_CONFIG
+        return RandomForestRegressor(**kwargs)
     elif model is "xgb":
-        if params is None: params = XGBOOST_CONFIG
-        return xgb.XGBRegressor(**params)
+        if len(kwargs) == 0: kwargs = XGBOOST_CONFIG
+        return xgb.XGBRegressor(**kwargs)
     elif model is "lgbm":
-        if params is None: params = LIGHTGBM_CONFIG
-        return lgbm.LGBMRegressor(**params)
+        if len(kwargs) == 0: kwargs = LIGHTGBM_CONFIG
+        return lgbm.LGBMRegressor(**kwargs)
     elif model is "lr":
-        if params is None: params = LR_CONFIG
-        return LinearRegression(**params)
+        if len(kwargs) == 0: kwargs = LR_CONFIG
+        return LinearRegression(**kwargs)
     elif model is "avg":
-        if params is None: params = AVG_CONFIG
-        return DummyRegressor(**params)
+        if len(kwargs) == 0: kwargs = AVG_CONFIG
+        return DummyRegressor(**kwargs)
 
