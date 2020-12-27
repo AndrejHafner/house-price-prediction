@@ -6,24 +6,53 @@ import numpy as np
 from scipy.stats import skew, boxcox_normmax, probplot
 from scipy.special import boxcox1p
 from sklearn.preprocessing import StandardScaler
-from models import train, test, cv, get_model
+from models import train, save_submission, cv_all_models, cv, get_model
 
 
 def handle_missing_data(df):
-    print("Handling missing data...")
-    # Dealing with missing data
-    # Remove all the variables that have missing data, except for Electrical we delete
-    total = df.isnull().sum().sort_values(ascending=False)
-    percent = (df.isnull().sum() / df.isnull().count()).sort_values(ascending=False)
-    missing_data = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
+    # the data description states that NA refers to typical ('Typ') values
+    df['Functional'] = df['Functional'].fillna('Typ')
+    # Replace the missing values in each of the columns below with their mode
+    df['Electrical'] = df['Electrical'].fillna("SBrkr")
+    df['KitchenQual'] = df['KitchenQual'].fillna("TA")
+    df['Exterior1st'] = df['Exterior1st'].fillna(df['Exterior1st'].mode()[0])
+    df['Exterior2nd'] = df['Exterior2nd'].fillna(df['Exterior2nd'].mode()[0])
+    df['SaleType'] = df['SaleType'].fillna(df['SaleType'].mode()[0])
+    df['MSZoning'] = df.groupby('MSSubClass')['MSZoning'].transform(lambda x: x.fillna(x.mode()[0]))
 
-    print("Removing features because of missing data:")
-    print(", ".join(missing_data[missing_data['Total'] > 1].index))
-    removed_features = (missing_data[missing_data['Total'] > 1]).index
+    # Group the by neighborhoods, and fill in missing value by the median LotFrontage of the neighborhood
+    df['LotFrontage'] = df.groupby('Neighborhood')['LotFrontage'].transform(lambda x: x.fillna(x.median()))
 
-    df = df.drop(removed_features, 1)
-    df = df.drop(df.loc[df['Electrical'].isnull()].index)
-    return df, removed_features
+    # the data description stats that NA refers to "No Pool"
+    df["PoolQC"] = df["PoolQC"].fillna("None")
+
+    # Replacing the missing values with 0, since no garage = no cars in garage
+    for col in ('GarageYrBlt', 'GarageArea', 'GarageCars'):
+        df[col] = df[col].fillna(0)
+
+    # Replacing the missing values with None
+    for col in ['GarageType', 'GarageFinish', 'GarageQual', 'GarageCond']:
+        df[col] = df[col].fillna('None')
+
+    # NaN values for these categorical basement features, means there's no basement
+    for col in ('BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2'):
+        df[col] = df[col].fillna('None')
+
+    # Dont know how to update the rest - fill with None
+    objects = []
+    for i in df.columns:
+        if df[i].dtype == object:
+            objects.append(i)
+    df.update(df[objects].fillna('None'))
+
+    # And we do the same thing for numerical features, but this time with 0s
+    numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    numeric = []
+    for i in df.columns:
+        if df[i].dtype in numeric_dtypes:
+            numeric.append(i)
+    df.update(df[numeric].fillna(0))
+    return df
 
 def fix_skewness(df, skew_thresh = 0.5):
     # Fix features that don't have a normal distribution by applying a Box-Cox transformation
@@ -47,18 +76,18 @@ def fix_skewness(df, skew_thresh = 0.5):
     return df
 
 def remove_outliars(df):
-    df = df.drop(df[df['Id'] == 1299].index)
-    df = df.drop(df[df['Id'] == 524].index)
+    # df = df.drop(df[df['Id'] == 1299].index)
+    # df = df.drop(df[df['Id'] == 524].index)
     return df
 
 def clean_data(df):
-    df, removed_features = handle_missing_data(df)
+    df = handle_missing_data(df)
     df = remove_outliars(df)
 
     # Remove some of the features - should we? TODO
     # df = df.drop(['Street' ], axis=1)
 
-    return df, removed_features
+    return df
 
 def feature_engineering(df):
 
@@ -86,20 +115,32 @@ def feature_engineering(df):
 
     return df
 
-def preprocess_df_train(df_train):
-    df_train, removed_features = clean_data(df_train)
-    df_train = fix_skewness(df_train)
-    df_train = feature_engineering(df_train)
+def preprocess_df(df_train, df_test):
+    # Remove SalePrice and apply Box-Cox transformation to normalize it
+    train_y = np.log(df_train[["SalePrice"]])
+    df_train = df_train.drop(['SalePrice'], axis=1)
 
-    # Convert categorical data into dummy variables - one hot encoding
-    df_train = pd.get_dummies(df_train)
+    # Concat training and testing data to preprocess it together
+    df_train["train_set"] = True
+    df_test["train_set"] = False
+
+    df = pd.concat([df_train, df_test])
+    df = clean_data(df)
+    df = fix_skewness(df)
+    df = feature_engineering(df)
 
     # Remove ID - helps nothing as it uniquely identify every entry
-    df_train = df_train.drop(['Id'], axis=1)
+    df = df.drop(['Id'], axis=1)
 
-    train_x = df_train.drop(['SalePrice'], axis=1)
-    train_y = df_train["SalePrice"]
-    return train_x, train_y, removed_features
+    # Convert categorical data into dummy variables - one hot encoding
+    df = pd.get_dummies(df)
+
+    train_x = df[df["train_set"] == True]
+    test_x = df[df["train_set"] == False]
+
+
+    # train_x =
+    return train_x, train_y, test_x
 
 def preprocess_df_test(df_test, removed_features):
     df_test = df_test.drop(removed_features, 1)
@@ -118,14 +159,22 @@ def main():
     df_train = pd.read_csv("data/train.csv")
     df_test = pd.read_csv("data/test.csv")
 
-    train_x, train_y, removed_features = preprocess_df_train(df_train)
-    test_x = preprocess_df_test(df_test, removed_features)
+    train_x, train_y, test_x = preprocess_df(df_train, df_test)
+
+
+    cv_all_models(train_x, train_y)
 
     # Train models
-    # cv(get_model("xgb"), train_x, train_y)
-    xgb = train("lgbm", train_x, train_y)
-
-    test(xgb, test_x, df_test)
+    # model = train("xgb", train_x, train_y)
+    #
+    # # Predict for testing data
+    # predictions = model.predict(test_x)
+    #
+    # # Exponent on the predictions to fix for changing skewness
+    # predictions_exp = np.exp(predictions)
+    #
+    # # Save submission
+    # save_submission(model, predictions_exp, df_test)
 
 
 if __name__ == '__main__':

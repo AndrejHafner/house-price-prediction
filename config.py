@@ -1,12 +1,20 @@
 # Model parameters to be used during training
 
-SVM_CONFIG = {
+SVM_CONFIG = dict(
+    C=20,
+    epsilon= 0.008,
+    gamma=0.0003
+)
 
-}
-
-RANDOM_FOREST_CONFIG = {
-
-}
+RANDOM_FOREST_CONFIG = dict(
+    n_estimators=1200,
+    max_depth=15,
+    min_samples_split=5,
+    min_samples_leaf=5,
+    max_features=None,
+    oob_score=True,
+    random_state=42
+)
 
 XGBOOST_CONFIG = dict(
     learning_rate=0.01,

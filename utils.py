@@ -14,7 +14,7 @@ LIENAR_REGRESSION_SUBMISSION_DIR = BASE_SUBMISSION_DIR + "/linear_regression"
 DUMMY_REGRESSOR_AVG_SUBMISSION_DIR = BASE_SUBMISSION_DIR + "/dummy_regressor_avg"
 
 
-def save_submission(dir, df_test, predictions, testing_results = None):
+def save_submission_file(dir, df_test, predictions, testing_results = None):
     if not os.path.exists(dir): os.mkdir(dir)
 
     submission = pd.DataFrame({"Id": df_test["Id"], "SalePrice": np.array(predictions)})
