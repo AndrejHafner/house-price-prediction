@@ -1,4 +1,5 @@
 # Model parameters to be used during training
+from sklearn.model_selection import KFold
 
 SVM_CONFIG = dict(
     C=20,
@@ -49,6 +50,8 @@ LIGHTGBM_CONFIG = dict(
 )
 
 LR_CONFIG = dict(
+    # normalize=True
+    # fit_intercept=False
 )
 
 AVG_CONFIG = dict(
@@ -57,20 +60,20 @@ AVG_CONFIG = dict(
 
 RIDGE_LR_CONFIG = dict(
     alphas=[1e-15, 1e-10, 1e-8, 9e-4, 7e-4, 5e-4, 3e-4, 1e-4, 1e-3, 5e-2, 1e-2, 0.1, 0.3, 1, 3, 5, 10, 15, 18, 20, 30, 50, 75, 100],
-    cv=10
+    cv=KFold(n_splits=12, random_state=42, shuffle=True)
 )
 
 LASSO_LR_CONFIG = dict(
     max_iter=1e7,
     alphas=[5e-05, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008],
     random_state=42,
-    cv=10
+    cv=KFold(n_splits=12, random_state=42, shuffle=True)
 )
 
 ELASTICNET_LR_CONFIG = dict(
     max_iter=1e7,
     alphas=[0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007],
-    cv=10,
+    cv=KFold(n_splits=12, random_state=42, shuffle=True),
     l1_ratio=[0.8, 0.85, 0.9, 0.95, 0.99, 1]
 )
 

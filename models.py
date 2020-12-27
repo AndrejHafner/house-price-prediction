@@ -8,7 +8,7 @@ from sklearn.model_selection import cross_validate
 from sklearn.metrics import mean_squared_error, make_scorer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline, Pipeline
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import RobustScaler, MinMaxScaler, StandardScaler
 from sklearn.svm import SVR
 from sklearn.linear_model import LinearRegression, RidgeCV, LassoCV, ElasticNetCV
 from sklearn.dummy import DummyRegressor
@@ -69,7 +69,7 @@ def cv(model, x, y, k = 10, model_name = ""):
     cv_result = cross_validate(model, x, y.values.ravel(), cv=k, n_jobs=8, scoring=scorers)
     rmsle_score = float(np.mean(cv_result["test_rmsle"]))
     rmse_score = float(np.mean(cv_result["test_rmse"]))
-    print(f"Cross validation complete - { model_name }. Folds: { k }, RMSE: { round(rmse_score, 3) }, RMSLE: {round(rmsle_score, 3)}.")
+    print(f"Cross validation complete - { model_name }. Folds: { k }, RMSE: { round(rmse_score, 4) }, RMSLE: {round(rmsle_score, 4)}.")
 
 
 def cv_all_models(x,y, **kwargs):
@@ -101,7 +101,7 @@ def get_model(model, **kwargs):
         return make_pipeline(RobustScaler(), LassoCV(**kwargs))
     elif model == "elasticnet_lr":
         if len(kwargs) == 0: kwargs = ELASTICNET_LR_CONFIG
-        return  make_pipeline(RobustScaler(), ElasticNetCV(**kwargs))
+        return make_pipeline(RobustScaler(), ElasticNetCV(**kwargs))
     elif model == "stacked":
         if len(kwargs) == 0: kwargs = STACKED_CONFIG
 
@@ -117,7 +117,7 @@ def get_model(model, **kwargs):
         return StackingCVRegressor(**kwargs)
     elif model == "lr":
         if len(kwargs) == 0: kwargs = LR_CONFIG
-        return make_pipeline(RobustScaler(), LinearRegression(**kwargs))
+        return make_pipeline(LinearRegression(**kwargs))
     elif model == "avg":
         if len(kwargs) == 0: kwargs = AVG_CONFIG
         return DummyRegressor(**kwargs)

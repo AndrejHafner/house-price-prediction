@@ -150,11 +150,11 @@ def main():
 
     train_x, train_y, test_x = preprocess_df(df_train, df_test)
 
-    cv_all_models(train_x, train_y)
-    # cv(get_model("lasso_lr"), train_x, train_y)
+    # cv_all_models(train_x, train_y)
+    cv(get_model("lr"), train_x, train_y)
     # Train models
-    # model = train("lasso_lr", train_x, train_y)
-    #
+    # model = train("lgbm", train_x, train_y)
+
     # # Predict for testing data
     # predictions = model.predict(test_x)
     #
