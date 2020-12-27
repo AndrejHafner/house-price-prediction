@@ -15,7 +15,7 @@ from utils import *
 from config import *
 
 
-models = ["svm","rf","xgb","lgbm", "lr", "avg"]
+models = ["svm", "xgb","lgbm", "lr", "avg", "rf"]
 
 def train(model, x, y, print_progress = True, **kwargs):
 
@@ -44,41 +44,41 @@ def save_submission(model, predictions, df_test):
     elif isinstance(model, DummyRegressor):
         save_submission_file(DUMMY_REGRESSOR_AVG_SUBMISSION_DIR, df_test, predictions)
 
-def cv(model, x, y, k = 10):
+def cv(model, x, y, k = 10, model_name = ""):
     scorers = {
         "rmse": make_scorer(mean_squared_error, squared=False)
     }
 
-    cv_result = cross_validate(model, x, y, cv=k, n_jobs=8, scoring=scorers)
+    cv_result = cross_validate(model, x, y.values.ravel(), cv=k, n_jobs=8, scoring=scorers)
     rmse = float(np.mean(cv_result["test_rmse"]))
-    print(f"Cross validation complete. Folds: { k }, Mean RMSE: { round(rmse, 3) }.")
+    print(f"Cross validation complete - { model_name }. Folds: { k }, Mean RMSE: { round(rmse, 3) }.")
 
 
 def cv_all_models(x,y, **kwargs):
     for model_name in models:
-        cv(get_model(model_name), x, y, **kwargs)
+        cv(get_model(model_name), x, y, **kwargs, model_name=model_name)
 
 def get_model(model, **kwargs):
     if model not in models:
         print("Unknown model - exiting.")
         return
 
-    if model is "svm":
+    if model == "svm":
         if len(kwargs) == 0: kwargs = SVM_CONFIG
         return make_pipeline(RobustScaler(), SVR(**kwargs))
-    elif model is "rf":
+    elif model == "rf":
         if len(kwargs) == 0: kwargs = RANDOM_FOREST_CONFIG
         return RandomForestRegressor(**kwargs)
-    elif model is "xgb":
+    elif model == "xgb":
         if len(kwargs) == 0: kwargs = XGBOOST_CONFIG
         return xgb.XGBRegressor(**kwargs)
-    elif model is "lgbm":
+    elif model == "lgbm":
         if len(kwargs) == 0: kwargs = LIGHTGBM_CONFIG
         return lgbm.LGBMRegressor(**kwargs)
-    elif model is "lr":
+    elif model == "lr":
         if len(kwargs) == 0: kwargs = LR_CONFIG
         return LinearRegression(**kwargs)
-    elif model is "avg":
+    elif model == "avg":
         if len(kwargs) == 0: kwargs = AVG_CONFIG
         return DummyRegressor(**kwargs)
 

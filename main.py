@@ -1,12 +1,13 @@
+import warnings
 
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-from scipy.stats import skew, boxcox_normmax, probplot
+from scipy.stats import skew, boxcox_normmax, probplot, PearsonRConstantInputWarning, PearsonRNearConstantInputWarning
 from scipy.special import boxcox1p
-from sklearn.preprocessing import StandardScaler
 from models import train, save_submission, cv_all_models, cv, get_model
+
 
 
 def handle_missing_data(df):
@@ -45,13 +46,19 @@ def handle_missing_data(df):
             objects.append(i)
     df.update(df[objects].fillna('None'))
 
-    # And we do the same thing for numerical features, but this time with 0s
+    # Same thing for numerical features, but this time with 0s
     numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
     numeric = []
     for i in df.columns:
         if df[i].dtype in numeric_dtypes:
             numeric.append(i)
     df.update(df[numeric].fillna(0))
+
+    # Some of the non-numeric predictors are stored as numbers -  we convert them into strings
+    df['MSSubClass'] = df['MSSubClass'].apply(str)
+    df['YrSold'] = df['YrSold'].astype(str)
+    df['MoSold'] = df['MoSold'].astype(str)
+
     return df
 
 def fix_skewness(df, skew_thresh = 0.5):
@@ -66,8 +73,8 @@ def fix_skewness(df, skew_thresh = 0.5):
     # Calculate the skew for all the numeric features
     features_skew = df[numeric].apply(lambda x: skew(x)).sort_values(ascending=False)
 
-    # Define all the features that have absolute skewness above 0.5 as skewed and apply transformation
-    high_skew = features_skew[features_skew.abs() > skew_thresh]
+    # Define all the features that have skewness above 0.5 as skewed and apply transformation
+    high_skew = features_skew[features_skew > skew_thresh]
 
     # Apply Box-Cox transformation to skewed features
     for i in high_skew.index:
@@ -83,10 +90,6 @@ def remove_outliars(df):
 def clean_data(df):
     df = handle_missing_data(df)
     df = remove_outliars(df)
-
-    # Remove some of the features - should we? TODO
-    # df = df.drop(['Street' ], axis=1)
-
     return df
 
 def feature_engineering(df):
@@ -138,22 +141,8 @@ def preprocess_df(df_train, df_test):
     train_x = df[df["train_set"] == True]
     test_x = df[df["train_set"] == False]
 
-
-    # train_x =
     return train_x, train_y, test_x
 
-def preprocess_df_test(df_test, removed_features):
-    df_test = df_test.drop(removed_features, 1)
-    df_test = fix_skewness(df_test)
-    df_test = feature_engineering(df_test)
-
-    # Convert categorical data into dummy variables - one hot encoding
-    df_test = pd.get_dummies(df_test)
-
-    # Remove ID - helps nothing as it uniquely identify every entry
-    df_test = df_test.drop(['Id'], axis=1)
-
-    return df_test
 
 def main():
     df_train = pd.read_csv("data/train.csv")
@@ -161,9 +150,8 @@ def main():
 
     train_x, train_y, test_x = preprocess_df(df_train, df_test)
 
-
     cv_all_models(train_x, train_y)
-
+    # cv(get_model("rf"), train_x, train_y)
     # Train models
     # model = train("xgb", train_x, train_y)
     #
@@ -178,4 +166,6 @@ def main():
 
 
 if __name__ == '__main__':
+    warnings.filterwarnings("ignore", category=PearsonRConstantInputWarning)
+    warnings.filterwarnings("ignore", category=PearsonRNearConstantInputWarning)
     main()
