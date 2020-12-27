@@ -16,7 +16,7 @@ from utils import *
 from config import *
 
 
-models = ["svm", "rf", "xgb", "lgbm", "ridge_lr", "lasso_lr","elasticnet_lr", "lr", "avg"]
+models = ["svm", "rf", "xgb", "lgbm", "ridge_lr", "lasso_lr", "elasticnet_lr", "lr", "avg"]
 
 def train(model, x, y, print_progress = True, **kwargs):
 
@@ -26,14 +26,21 @@ def train(model, x, y, print_progress = True, **kwargs):
 
     start_time = time.time()
     reg_model = get_model(model, **kwargs)
-    reg_model.fit(x,y)
+    reg_model.fit(x, y.values.ravel())
 
     if print_progress: print(f"Training {model} took {round(time.time() - start_time)} seconds.")
     return reg_model
 
 def save_submission(model, predictions, df_test):
     if isinstance(model, Pipeline):
-        save_submission_file(SVM_SUBMISSION_DIR, df_test, predictions)
+        if isinstance(model.steps[1][1], LinearRegression):
+            save_submission_file(LINEAR_REGRESSION_SUBMISSION_DIR, df_test, predictions)
+        if isinstance(model.steps[1][1], RidgeCV):
+            save_submission_file(RIDGE_REGRESSION_SUBMISSION_DIR, df_test, predictions)
+        if isinstance(model.steps[1][1], LassoCV):
+            save_submission_file(LASSO_REGRESSION_SUBMISSION_DIR, df_test, predictions)
+        if isinstance(model.steps[1][1], ElasticNetCV):
+            save_submission_file(ELASTICNET_REGRESSION_SUBMISSION_DIR, df_test, predictions)
     elif isinstance(model, RandomForestRegressor):
         save_submission_file(RANDOM_FOREST_SUBMISSION_DIR, df_test, predictions)
     elif isinstance(model, xgb.XGBRegressor):
@@ -41,18 +48,25 @@ def save_submission(model, predictions, df_test):
     elif isinstance(model, lgbm.LGBMRegressor):
         save_submission_file(LIGHTGBM_SUBMISSION_DIR, df_test, predictions)
     elif isinstance(model, LinearRegression):
-        save_submission_file(LIENAR_REGRESSION_SUBMISSION_DIR, df_test, predictions)
+        save_submission_file(LINEAR_REGRESSION_SUBMISSION_DIR, df_test, predictions)
     elif isinstance(model, DummyRegressor):
         save_submission_file(DUMMY_REGRESSOR_AVG_SUBMISSION_DIR, df_test, predictions)
 
+def rmse_exp(y, y_pred):
+    y_exp = np.exp(y)
+    y_pred_exp = np.exp(y_pred)
+    return np.sqrt((1 / len(y_exp)) * np.sum((y_pred_exp - y_exp)**2))
+
 def cv(model, x, y, k = 10, model_name = ""):
     scorers = {
-        "rmse": make_scorer(mean_squared_error, squared=False)
+        "rmse": make_scorer(mean_squared_error, squared=False),
+        "rmse_exp": make_scorer(rmse_exp, greater_is_better=True)
     }
 
     cv_result = cross_validate(model, x, y.values.ravel(), cv=k, n_jobs=8, scoring=scorers)
-    rmse = float(np.mean(cv_result["test_rmse"]))
-    print(f"Cross validation complete - { model_name }. Folds: { k }, Mean RMSE: { round(rmse, 3) }.")
+    rmse_score = float(np.mean(cv_result["test_rmse"]))
+    rmse_exp_score = float(np.mean(cv_result["test_rmse_exp"]))
+    print(f"Cross validation complete - { model_name }. Folds: { k }, mean RMSE: { round(rmse_score, 3) }, mean RMSE_exp: {round(rmse_exp_score, 3)}.")
 
 
 def cv_all_models(x,y, **kwargs):
