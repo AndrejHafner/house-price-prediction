@@ -150,8 +150,8 @@ def main():
 
     train_x, train_y, test_x = preprocess_df(df_train, df_test)
 
-    cv_all_models(train_x, train_y)
-    # cv(get_model("rf"), train_x, train_y)
+    # cv_all_models(train_x, train_y)
+    cv(get_model("lr"), train_x, train_y)
     # Train models
     # model = train("xgb", train_x, train_y)
     #

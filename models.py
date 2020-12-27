@@ -2,6 +2,7 @@ import numpy as np
 import time
 import xgboost as xgb
 import lightgbm as lgbm
+from mlxtend.regressor import StackingCVRegressor
 
 from sklearn.model_selection import cross_validate
 from sklearn.metrics import mean_squared_error, make_scorer
@@ -9,13 +10,13 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import RobustScaler
 from sklearn.svm import SVR
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, RidgeCV, LassoCV, ElasticNetCV
 from sklearn.dummy import DummyRegressor
 from utils import *
 from config import *
 
 
-models = ["svm", "xgb","lgbm", "lr", "avg", "rf"]
+models = ["svm", "rf", "xgb", "lgbm", "ridge_lr", "lasso_lr","elasticnet_lr", "lr", "avg"]
 
 def train(model, x, y, print_progress = True, **kwargs):
 
@@ -75,9 +76,31 @@ def get_model(model, **kwargs):
     elif model == "lgbm":
         if len(kwargs) == 0: kwargs = LIGHTGBM_CONFIG
         return lgbm.LGBMRegressor(**kwargs)
+    elif model == "ridge_lr":
+        if len(kwargs) == 0: kwargs = RIDGE_LR_CONFIG
+        return make_pipeline(RobustScaler(), RidgeCV(**kwargs))
+    elif model == "lasso_lr":
+        if len(kwargs) == 0: kwargs = LASSO_LR_CONFIG
+        return make_pipeline(RobustScaler(), LassoCV(**kwargs))
+    elif model == "elasticnet_lr":
+        if len(kwargs) == 0: kwargs = ELASTICNET_LR_CONFIG
+        return  make_pipeline(RobustScaler(), ElasticNetCV(**kwargs))
+    elif model == "stacked":
+        if len(kwargs) == 0: kwargs = STACKED_CONFIG
+
+        regressors = [
+            get_model("xgb"),
+            get_model("svm"),
+            get_model("rf"),
+            get_model("lgbm")
+        ]
+        kwargs["regressors"] = regressors
+        kwargs["meta_regressor"] = regressors[0]
+
+        return StackingCVRegressor(**kwargs)
     elif model == "lr":
         if len(kwargs) == 0: kwargs = LR_CONFIG
-        return LinearRegression(**kwargs)
+        return make_pipeline(RobustScaler(), LinearRegression(**kwargs))
     elif model == "avg":
         if len(kwargs) == 0: kwargs = AVG_CONFIG
         return DummyRegressor(**kwargs)
