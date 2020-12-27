@@ -18,31 +18,34 @@ RANDOM_FOREST_CONFIG = dict(
 
 XGBOOST_CONFIG = dict(
     learning_rate=0.01,
-    n_estimators=3460,
-    max_depth=3,
+    n_estimators=6000,
+    max_depth=4,
     min_child_weight=0,
-    gamma=0,
+    gamma=0.6,
     subsample=0.7,
     colsample_bytree=0.7,
-    objective='reg:squarederror',
+    objective='reg:linear',
     nthread=-1,
     scale_pos_weight=1,
     seed=27,
-    reg_alpha=0.00006
+    reg_alpha=0.00006,
+    random_state=42
 )
 
 LIGHTGBM_CONFIG = dict(
     objective='regression',
-    num_leaves=4,
-    learning_rate=0.01,
-    n_estimators=5000,
-    max_bin=200,
-    bagging_fraction=0.75,
-    bagging_freq=5,
-    bagging_seed=7,
-    feature_fraction=0.2,
-    feature_fraction_seed=7,
-    verbose=-1,
+   num_leaves=6,
+   learning_rate=0.01,
+   n_estimators=7000,
+   max_bin=200,
+   bagging_fraction=0.8,
+   bagging_freq=4,
+   bagging_seed=8,
+   feature_fraction=0.2,
+   feature_fraction_seed=8,
+   min_sum_hessian_in_leaf = 11,
+   verbose=-1,
+   random_state=42
 )
 
 LR_CONFIG = dict(

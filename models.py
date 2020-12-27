@@ -57,16 +57,19 @@ def rmse_exp(y, y_pred):
     y_pred_exp = np.exp(y_pred)
     return np.sqrt((1 / len(y_exp)) * np.sum((y_pred_exp - y_exp)**2))
 
+def rmsle(y, y_pred):
+    return np.sqrt(mean_squared_error(y, y_pred))
+
 def cv(model, x, y, k = 10, model_name = ""):
     scorers = {
-        "rmse": make_scorer(mean_squared_error, squared=False),
-        "rmse_exp": make_scorer(rmse_exp, greater_is_better=True)
+        "rmsle": make_scorer(rmsle, greater_is_better=True),
+        "rmse": make_scorer(rmse_exp, greater_is_better=True)
     }
 
     cv_result = cross_validate(model, x, y.values.ravel(), cv=k, n_jobs=8, scoring=scorers)
+    rmsle_score = float(np.mean(cv_result["test_rmsle"]))
     rmse_score = float(np.mean(cv_result["test_rmse"]))
-    rmse_exp_score = float(np.mean(cv_result["test_rmse_exp"]))
-    print(f"Cross validation complete - { model_name }. Folds: { k }, mean RMSE: { round(rmse_score, 3) }, mean RMSE_exp: {round(rmse_exp_score, 3)}.")
+    print(f"Cross validation complete - { model_name }. Folds: { k }, RMSE: { round(rmse_score, 3) }, RMSLE: {round(rmsle_score, 3)}.")
 
 
 def cv_all_models(x,y, **kwargs):
