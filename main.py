@@ -151,7 +151,7 @@ def main():
     train_x, train_y, test_x = preprocess_df(df_train, df_test)
 
     # cv_all_models(train_x, train_y)
-    cv(get_model("lr"), train_x, train_y)
+    # cv(get_model("lr"), train_x, train_y)
     # Train models
     # model = train("lgbm", train_x, train_y)
 
@@ -163,6 +163,14 @@ def main():
     #
     # # Save submission
     # save_submission(model, predictions_exp, df_test)
+
+    # Check linear regression coefficients
+    model = train("lr", train_x, train_y)
+    pairs = sorted([(train_x.columns.values.tolist()[i], model.coef_[i]) for i in range(len(model.coef_))], key=lambda x: x[1], reverse=True)
+    print(pairs[:5])
+    print(pairs[-5:])
+
+
 
 
 if __name__ == '__main__':

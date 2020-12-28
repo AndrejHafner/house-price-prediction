@@ -33,14 +33,14 @@ def train(model, x, y, print_progress = True, **kwargs):
 
 def save_submission(model, predictions, df_test):
     if isinstance(model, Pipeline):
-        if isinstance(model.steps[1][1], LinearRegression):
-            save_submission_file(LINEAR_REGRESSION_SUBMISSION_DIR, df_test, predictions)
         if isinstance(model.steps[1][1], RidgeCV):
             save_submission_file(RIDGE_REGRESSION_SUBMISSION_DIR, df_test, predictions)
-        if isinstance(model.steps[1][1], LassoCV):
+        elif isinstance(model.steps[1][1], LassoCV):
             save_submission_file(LASSO_REGRESSION_SUBMISSION_DIR, df_test, predictions)
-        if isinstance(model.steps[1][1], ElasticNetCV):
+        elif isinstance(model.steps[1][1], ElasticNetCV):
             save_submission_file(ELASTICNET_REGRESSION_SUBMISSION_DIR, df_test, predictions)
+    elif isinstance(model, LinearRegression):
+        save_submission_file(LINEAR_REGRESSION_SUBMISSION_DIR, df_test, predictions)
     elif isinstance(model, RandomForestRegressor):
         save_submission_file(RANDOM_FOREST_SUBMISSION_DIR, df_test, predictions)
     elif isinstance(model, xgb.XGBRegressor):
@@ -117,7 +117,7 @@ def get_model(model, **kwargs):
         return StackingCVRegressor(**kwargs)
     elif model == "lr":
         if len(kwargs) == 0: kwargs = LR_CONFIG
-        return make_pipeline(LinearRegression(**kwargs))
+        return LinearRegression(**kwargs)
     elif model == "avg":
         if len(kwargs) == 0: kwargs = AVG_CONFIG
         return DummyRegressor(**kwargs)
