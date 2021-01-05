@@ -34,7 +34,7 @@ XGBOOST_CONFIG = dict(
 )
 
 LIGHTGBM_CONFIG = dict(
-    objective='regression',
+   objective='regression',
    num_leaves=6,
    learning_rate=0.01,
    n_estimators=7000,

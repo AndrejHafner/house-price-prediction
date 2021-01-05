@@ -16,7 +16,7 @@ def handle_missing_data(df):
     # Replace the missing values in each of the columns below with their mode
     df['Electrical'] = df['Electrical'].fillna("SBrkr")
     df['KitchenQual'] = df['KitchenQual'].fillna("TA")
-    df['Exterior1st'] = df['Exterior1st'].fillna(df['Exterior1st'].mode()[0])
+    df['Fo'] = df['Exterior1st'].fillna(df['Exterior1st'].mode()[0])
     df['Exterior2nd'] = df['Exterior2nd'].fillna(df['Exterior2nd'].mode()[0])
     df['SaleType'] = df['SaleType'].fillna(df['SaleType'].mode()[0])
     df['MSZoning'] = df.groupby('MSSubClass')['MSZoning'].transform(lambda x: x.fillna(x.mode()[0]))
@@ -149,15 +149,19 @@ def main():
     df_test = pd.read_csv("data/test.csv")
 
     train_x, train_y, test_x = preprocess_df(df_train, df_test)
+    # COMMENT OUT SECTIONS YOU WANT TO RUN
 
-    # cv_all_models(train_x, train_y)
+    # Cross-validate all models
+    cv_all_models(train_x, train_y)
+
+    # Cross-validate a single model
     # cv(get_model("lr"), train_x, train_y)
-    # Train models
+
+
+    # Train models, predict for testing data and save submission
     # model = train("lgbm", train_x, train_y)
 
-    # # Predict for testing data
     # predictions = model.predict(test_x)
-    #
     # # Exponent on the predictions to fix for changing skewness
     # predictions_exp = np.exp(predictions)
     #
@@ -165,10 +169,10 @@ def main():
     # save_submission(model, predictions_exp, df_test)
 
     # Check linear regression coefficients
-    model = train("lr", train_x, train_y)
-    pairs = sorted([(train_x.columns.values.tolist()[i], model.coef_[i]) for i in range(len(model.coef_))], key=lambda x: x[1], reverse=True)
-    print(pairs[:5])
-    print(pairs[-5:])
+    # model = train("lr", train_x, train_y)
+    # pairs = sorted([(train_x.columns.values.tolist()[i], model.coef_[i]) for i in range(len(model.coef_))], key=lambda x: x[1], reverse=True)
+    # print(pairs[:5])
+    # print(pairs[-5:])
 
 
 
